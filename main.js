@@ -8,8 +8,13 @@ import { access,
 } from "node:fs";
 
 
-const arg1 = process.argv[2];
-const arg2 = process.argv[3];
+
+const arg1 = process.argv[2] !== undefined ? process.argv[2] : "";
+const arg2 = process.argv[3] !== undefined ? process.argv[3] : "";
+const arg3 = process.argv[4] !== undefined ? process.argv[4].toLowerCase() : "";
+
+console.log(arg3);
+
 const jsonFile = "./data.json";
 
 try {
@@ -31,36 +36,49 @@ argsMap.set("list", listTasks);
 const getCommand = argsMap.get(arg1);
 const test = getCommand(arg2);
 
-
-function Task(desc, state, date) {
+function Task(desc, state, createDate, updateDate) {
     this.desc = desc;
     this.state = state;
-    this.date = date;
+    this.createDate = createDate;
+    this.updateDate = updateDate;
 }
 
 
-function addTask(desc) {
+function readDataFile() {
+    const jsonFile = "./data.json";
     const data = readFileSync(jsonFile, 'utf8');
     const jsonData = JSON.parse(data);
+    return jsonData['tasks'];
+}
+
+function taskView(title, task) {
+    console.log("====================================================");
+    console.log(`${title}`);
+    console.log("====================================================");
+    console.log(`Description: ${task.desc}`);
+    console.log(`State: ${task.state}`);
+    console.log(`Created At: ${task.createDate}`);
+    console.log(`Updated At: ${task.updateDate}`);
+    console.log("====================================================");
+}
+
+function addTask(desc) {
     const date = new Date(Date.now());
-    const taskArray = jsonData['tasks']
+    const taskArray = readDataFile();
     const [month, day, year] = [
         date.getMonth(),
         date.getDate(),
         date.getFullYear(),
     ];
-    const parseDate = `${month + 1}/${day}/${year}`
-    taskArray[taskArray.length] = new Task(desc, 'TO_DO', parseDate);
+    const parseDate = `${month + 1}/${day}/${year}`;
+    taskArray[taskArray.length] = new Task(desc,
+                                           'TODO', 
+                                           parseDate, 
+                                           parseDate);
     const contents = `{"tasks": ${JSON.stringify(taskArray, null, 2)}}`;
 
     writeFileSync(jsonFile, contents, 'utf8');
-    console.log("====================================================");
-    console.log(" Added TODO");
-    console.log("====================================================");
-    console.log(`Description: ${taskArray[taskArray.length - 1].desc}`);
-    console.log(`State: ${taskArray[taskArray.length - 1].state}`);
-    console.log(`Date: ${taskArray[taskArray.length - 1].date}`);
-    console.log("====================================================");
+    taskView("Added TODO", taskArray[taskArray.length - 1])
 }
 
 function updateTask() {
@@ -78,8 +96,15 @@ function markTask(task) {
 }
 
 // filter will be all, todo, inProgress, done
-function listTasks(filter = 'inProgress') {
-    console.log('List Task');
-    console.log(filter);
+function listTasks() {
+    let tasks = readDataFile();
+    for(let task of tasks) {
+        if(task.state.toLowerCase() === arg2.toLowerCase()) {
+            taskView(`${arg2}: Tasks List`, task);
+        }
+        if(arg2.toLowerCase() === 'all') {
+            taskView("All Tasks", task);
+        }
+    }
 }
 
