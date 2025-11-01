@@ -4,8 +4,9 @@ import { access,
     readFileSync, 
     existsSync,
     readdirSync,
-    statSync
+    statSync,
 } from "node:fs";
+import { createInterface } from "node:readline";
 
 
 
@@ -32,6 +33,7 @@ argsMap.set("update", updateTask);
 argsMap.set("delete", deleteTask);
 argsMap.set("mark", markTask);
 argsMap.set("list", listTasks);
+argsMap.set("help", help);
 
 const getCommand = argsMap.get(arg1);
 const test = getCommand(arg2);
@@ -51,10 +53,13 @@ function readDataFile() {
     return jsonData['tasks'];
 }
 
-function taskView(title, task) {
+function title(title) {
     console.log("====================================================");
     console.log(`${title}`);
     console.log("====================================================");
+}
+
+function taskView(task) {
     console.log(`Description: ${task.desc}`);
     console.log(`State: ${task.state}`);
     console.log(`Created At: ${task.createDate}`);
@@ -78,11 +83,41 @@ function addTask(desc) {
     const contents = `{"tasks": ${JSON.stringify(taskArray, null, 2)}}`;
 
     writeFileSync(jsonFile, contents, 'utf8');
-    taskView("Added TODO", taskArray[taskArray.length - 1])
+    title("Added Task")
+    taskView(taskArray[taskArray.length - 1])
+}
+
+function userInput() {
+    const rl = createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+    console.log("====================================================");
+    return rl.question('Please Select a Task => ', (userInput) => {
+        rl.close() 
+    });
 }
 
 function updateTask() {
-    console.log('Update Task');
+    const tasks = readDataFile();
+    let count = 0;
+
+    if(tasks.length === 0) {
+        console.log(`No task to Update`)
+    } else {
+        title('Update Task');
+        for(let task of tasks) {
+            console.log(`${count}: ${task.desc} (state: ${task.state} updated at: ${task.updateDate})`);    
+
+            count++;
+        }
+        const input = userInput()
+        console.log(input);
+    }
+}
+
+function help() {
+    console.log("Help");
 }
 
 function deleteTask() {
@@ -98,12 +133,17 @@ function markTask(task) {
 // filter will be all, todo, inProgress, done
 function listTasks() {
     let tasks = readDataFile();
-    for(let task of tasks) {
-        if(task.state.toLowerCase() === arg2.toLowerCase()) {
-            taskView(`${arg2}: Tasks List`, task);
-        }
-        if(arg2.toLowerCase() === 'all') {
-            taskView("All Tasks", task);
+    if(tasks.length === 0) {
+        console.log(`No task for Filter: ${arg2}`)
+    } else {
+        title(`${arg2}: Tasks List`);
+        for(let task of tasks) {
+            if(task.state.toLowerCase() === arg2.toLowerCase()) {
+                taskView(task);
+            }
+            if(arg2.toLowerCase() === 'all') {
+                taskView(task);
+            }
         }
     }
 }
