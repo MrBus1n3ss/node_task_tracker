@@ -7,6 +7,7 @@ import { access,
     statSync,
 } from "node:fs";
 import { createInterface } from "node:readline";
+import promptSync from 'prompt-sync';
 
 
 
@@ -17,6 +18,7 @@ const arg3 = process.argv[4] !== undefined ? process.argv[4].toLowerCase() : "";
 console.log(arg3);
 
 const jsonFile = "./data.json";
+const prompt = promptSync()
 
 try {
     if (!existsSync(jsonFile)) {
@@ -111,8 +113,13 @@ function updateTask() {
 
             count++;
         }
-        const input = userInput()
-        console.log(input);
+        const input = prompt("=> ");
+        try {
+            const updateTask = tasks[input]; 
+            console.log(updateTask['desc']);
+        } catch (error) {
+            console.log(`Error: unknown Selection ${input}`); 
+        }
     }
 }
 
